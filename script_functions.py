@@ -4,10 +4,10 @@ import math
 import os
 import time
 
-linha = "600"
-onibus_ordem = "C47588"
-address_img_files = "/Users/mateus/Personal/raspberry/img_files"
-address_in_circle = "/Users/mateus/Personal/raspberry/in_circle"
+# linha = "600"
+# onibus_ordem = "C47588"
+# address_img_files = "/Users/mateus/Personal/raspberry/img_files"
+# address_in_circle = "/Users/mateus/Personal/raspberry/in_circle"
 
 ########################################################################################################
 
@@ -31,13 +31,12 @@ def are_points_in_the_circle(checkPoint, centerPoint, m): #(circle, bus, radius)
     dy = abs(centerPoint['lat'] - checkPoint['lat']) * ky
     return math.sqrt(dx * dx + dy * dy) <= km
 
-## GPS onibus ##
 
 ########################################################################################################
 
 ## gerenciamento do DB ##
 
-def get_all_marketing_from_db():
+def get_all_marketing_from_db(linha):
     url = 'https://db-postgress-tcc.herokuapp.com/marketing'
     x = requests.get(url)
     results = json.loads(x.text)
@@ -57,14 +56,13 @@ def download_image(image_url, name = 'image'):
     file = f'./img_files/{name}.jpeg'
     open(file, "wb").write(response.content)
 
-## gerenciamento do DB ##
 
 ########################################################################################################
 
 ## gerenciamento do internal_db ##
 
-def new_marketing_in_internal_db():
-    marketings = get_all_marketing_from_db(linha)
+def new_marketing_in_internal_db(marketings):
+    # marketings = get_all_marketing_from_db(linha)
     internal_db = read_internal_db()
     for marketing in marketings:
         new_marketing = True
@@ -94,15 +92,14 @@ def read_internal_db():
     internal_db = json.loads(internal_db)
     return internal_db
 
-## gerenciamento do internal_db ##
 
 ########################################################################################################
 
 ## reading in img_files folder ##
 
-def read_img_files_folder():
+def read_img_files_folder(address_img_files, linha):
     files = os.listdir(address_img_files)
-    marketing_list = get_all_marketing_from_db()
+    marketing_list = get_all_marketing_from_db(linha)
     info_files = []
 
     for file in files:
@@ -120,37 +117,44 @@ def read_img_files_folder():
         })
     return info_files
 
-## reading in img_files folder ##
 
 ########################################################################################################
 
 ## managing in in_circle folder ##
 
-def manage_in_circle_folder():
+def manage_in_circle_folder(source_folder, destination_folder, linha, onibus_ordem):
     bus_location = get_bus_gps(linha, onibus_ordem)
-    files = read_img_files_folder()
+    print(bus_location)
+    files = read_img_files_folder(source_folder, linha)
+    queue = manage_file('queue.txt', 'r')
+    queue = transform_str_to_arr(queue)
     for file in files:
         # print(bus_location)
-        destination = f'{address_in_circle}/{file["name"]}'
-        bus = {'lat': float(bus_location[0]['latitude']), 'lng': float(bus_location[0]['longitude'])}
+        destination = f'{destination_folder}/{file["name"]}' #address_in_circle
+        bus = {'lat': float(bus_location['latitude']), 'lng': float(bus_location['longitude'])}
         inside_circle = are_points_in_the_circle(file, bus, file['radius'])
         if (inside_circle):
-            copy_code = f'cp {address_img_files}/{file["name"]} {destination}'
-            os.system(copy_code)
+            if queue.count(file['name']) == 0:
+                copy_code = f'cp {source_folder}/{file["name"]} {destination}' #address_img_files
+                os.system(copy_code)
+                queue = [file['name']] + queue
         elif os.path.exists(destination):
             os.remove(destination)
+            arr = []
+            for i in queue:
+                if i != file['name']:
+                    arr.append(i)
+            queue = arr.copy() 
 
-## managing in in_circle folder ##
+    manage_file('queue.txt', 'w', str(queue))
 
 ########################################################################################################
 
 ## desktop background ##
 
-def desktop_background(files):
-    files = "" # transform to array
+def desktop_background(folder_in_circle, img_default_location):
+    files = manage_file('queue.txt', 'r')
     status = "" # read the file status
-    folder_in_circle = "" # folder that contains the image files that will be prompt in the screen
-    img_default_location = ""
     if len(files) == 0:
         os.system(f'pcmanfm --set-wallpaper {img_default_location}')
     else:
@@ -162,6 +166,26 @@ def desktop_background(files):
         # escreve o array new_file no arquivo files
 
 
+########################################################################################################
 
-# 'pcmanfm --set-wallpaper /home/pi/Downloads/foto1.jpg'
-## desktop background ##
+## reading and writing files
+
+def manage_file(file_name, action, content = ""):
+    file = open(file_name, 'r')
+    if action == 'r' or action == 'read':
+        return file.read()
+    else:
+        file = open(file_name, "w")
+        file.write(content)
+        file.close()
+
+########################################################################################################
+
+## transform string to array
+
+def transform_str_to_arr(string):
+    aux = string.replace('[','')
+    aux = aux.replace(']','')
+    if aux == '':
+        return []
+    return aux.split(',')
