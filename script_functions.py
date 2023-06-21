@@ -122,49 +122,60 @@ def read_img_files_folder(address_img_files, linha):
 
 ## managing in in_circle folder ##
 
+# def manage_in_circle_folder(source_folder, destination_folder, linha, onibus_ordem):
+#     bus_location = get_bus_gps(linha, onibus_ordem)
+#     # print(bus_location)
+#     files = read_img_files_folder(source_folder, linha)
+#     queue = manage_file('queue.txt', 'r')
+#     queue = transform_str_to_arr(queue)
+#     for file in files:
+#         # print(bus_location)
+#         destination = f'{destination_folder}/{file["name"]}' #address_in_circle
+#         bus = {'lat': float(bus_location['latitude']), 'lng': float(bus_location['longitude'])}
+#         inside_circle = are_points_in_the_circle(file, bus, file['radius'])
+#         if (inside_circle):
+#             if queue.count(file['name']) == 0:
+#                 copy_code = f'cp {source_folder}/{file["name"]} {destination}' #address_img_files
+#                 os.system(copy_code)
+#                 queue = [file['name']] + queue
+#         elif os.path.exists(destination):
+#             os.remove(destination)
+#             arr = []
+#             for i in queue:
+#                 if i != file['name']:
+#                     arr.append(i)
+#             queue = arr.copy() 
+
+#     manage_file('queue.txt', 'w', str(queue))
+
+
 def manage_in_circle_folder(source_folder, destination_folder, linha, onibus_ordem):
     bus_location = get_bus_gps(linha, onibus_ordem)
-    print(bus_location)
+    # print(bus_location)
     files = read_img_files_folder(source_folder, linha)
-    queue = manage_file('queue.txt', 'r')
-    queue = transform_str_to_arr(queue)
     for file in files:
         # print(bus_location)
         destination = f'{destination_folder}/{file["name"]}' #address_in_circle
         bus = {'lat': float(bus_location['latitude']), 'lng': float(bus_location['longitude'])}
         inside_circle = are_points_in_the_circle(file, bus, file['radius'])
         if (inside_circle):
-            if queue.count(file['name']) == 0:
-                copy_code = f'cp {source_folder}/{file["name"]} {destination}' #address_img_files
-                os.system(copy_code)
-                queue = [file['name']] + queue
+            if os.path.exists(destination) == False:
+                os.system(f'cp {source_folder}/{file["name"]} {destination}' )
+
         elif os.path.exists(destination):
             os.remove(destination)
-            arr = []
-            for i in queue:
-                if i != file['name']:
-                    arr.append(i)
-            queue = arr.copy() 
-
-    manage_file('queue.txt', 'w', str(queue))
 
 ########################################################################################################
 
 ## desktop background ##
 
 def desktop_background(folder_in_circle, img_default_location):
-    files = manage_file('queue.txt', 'r')
-    status = "" # read the file status
-    if len(files) == 0:
+    image_circle_folder = os.listdir(folder_in_circle)
+
+    if len(image_circle_folder) == 0:
         os.system(f'pcmanfm --set-wallpaper {img_default_location}')
     else:
-        if status == "running":
-            time.sleep(2)
-        file = files.pop()
-        os.system(f'pcmanfm --set-wallpaper {folder_in_circle}/{file}')
-        new_file = [file] + files
-        # escreve o array new_file no arquivo files
-
+        os.system(f'pcmanfm --set-wallpaper {folder_in_circle}/{image_circle_folder[0]}')
 
 ########################################################################################################
 
