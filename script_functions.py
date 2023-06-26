@@ -169,24 +169,35 @@ def manage_in_circle_folder(source_folder, destination_folder, linha, onibus_ord
 
 ## desktop background ##
 
-def desktop_background(folder_in_circle, img_default_location, log_file):
+def desktop_background(folder_in_circle, img_default_location, log_file, line, bus_order):
     image_circle_folder = os.listdir(folder_in_circle)
 
-    if len(image_circle_folder) == 0:
-        os.system(f'pcmanfm --set-wallpaper {img_default_location}')
+    if len(image_circle_folder) != 0: 
+        image_info = {
+            "line" : line,
+            "bus_order" : bus_order,
+            "user_id": image_circle_folder[0].split('-')[0],
+            "marketing_id": image_circle_folder[0].split('-')[1].split('.')[0]
+        } 
+        # os.system(f'pcmanfm --set-wallpaper {folder_in_circle}/{image_circle_folder[0]}')
+        logging(True, log_file, image_info)
+
+    else:
+        # os.system(f'pcmanfm --set-wallpaper {img_default_location}')
         logging(False, log_file)
-    else:
-        os.system(f'pcmanfm --set-wallpaper {folder_in_circle}/{image_circle_folder[0]}')
-        logging(True, log_file)
         
-def logging(is_image_in_circle, log_file):
-    jump_line = f'echo ############## >> {log_file}'
+def logging(is_image_in_circle, log_file, image_info = "None"):
     if is_image_in_circle:
-        os.system(f'echo $(date) -- ônibus dentro do círculo de propaganda >> {log_file}')
+        os.system(f'echo $(date) >> {log_file}')
+        os.system(f'echo === situação: ônibus dentro do círculo de propaganda  >> {log_file}')
+        os.system(f'echo === linha do ônibus: {image_info["line"]} >> {log_file}')
+        os.system(f'echo === número de ordem do ônibus: {image_info["bus_order"]} >> {log_file}')
+        os.system(f'echo === id do usuário: {image_info["user_id"]} >> {log_file}')
+        os.system(f'echo === id da propaganda: {image_info["marketing_id"]} >> {log_file}')
     else:
-        os.system(f'echo $(date) -- ônibus fora do círculo de propaganda >> {log_file}')
-    #os.system(message)
-    os.system(f'echo ############## >> {log_file}')
+        os.system(f'echo $(date) >> {log_file}')
+        os.system(f'echo === situação: ônibus fora do círculo de propaganda >> {log_file}')
+    os.system(f'echo ------------------------------------------- >> {log_file}')
 
 ########################################################################################################
 
