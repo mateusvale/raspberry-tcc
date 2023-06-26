@@ -87,7 +87,7 @@ def write_internal_db(internal_db):
     file.close()
 
 def read_internal_db():
-    file = open("internal_db.json", "r")
+    file = open("/home/pi/TCC/raspberry-tcc/internal_db.json", "r")
     internal_db = file.read()
     internal_db = json.loads(internal_db)
     return internal_db
@@ -169,13 +169,24 @@ def manage_in_circle_folder(source_folder, destination_folder, linha, onibus_ord
 
 ## desktop background ##
 
-def desktop_background(folder_in_circle, img_default_location):
+def desktop_background(folder_in_circle, img_default_location, log_file):
     image_circle_folder = os.listdir(folder_in_circle)
 
     if len(image_circle_folder) == 0:
         os.system(f'pcmanfm --set-wallpaper {img_default_location}')
+        logging(False, log_file)
     else:
         os.system(f'pcmanfm --set-wallpaper {folder_in_circle}/{image_circle_folder[0]}')
+        logging(True, log_file)
+        
+def logging(is_image_in_circle, log_file):
+    jump_line = f'echo ############## >> {log_file}'
+    if is_image_in_circle:
+        os.system(f'echo $(date) -- ônibus dentro do círculo de propaganda >> {log_file}')
+    else:
+        os.system(f'echo $(date) -- ônibus fora do círculo de propaganda >> {log_file}')
+    #os.system(message)
+    os.system(f'echo ############## >> {log_file}')
 
 ########################################################################################################
 
